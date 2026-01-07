@@ -35,12 +35,10 @@ git clone [https://github.com/seu-usuario/nome-do-repo.git](https://github.com/s
 cd nome-do-repo
 Instale as dependências:
 
-Bash
 
 pip install -r requirements.txt
 Inicie o servidor:
 
-Bash
 
 uvicorn main:app --reload
 Acesse no navegador: http://127.0.0.1:8000
