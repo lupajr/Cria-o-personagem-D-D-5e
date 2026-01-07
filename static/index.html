@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador D&D 5e</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 50px 20px;
+            margin: 0;
+        }
+
+        .card {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h2,
+        h3 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-gerar {
+            background: #e74c3c;
+        }
+
+        .btn-historico {
+            background: #3498db;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-box {
+            border: 1px solid #bdc3c7;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .historico-item {
+            background: white;
+            margin-bottom: 8px;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 5px solid #e74c3c;
+            font-size: 0.85em;
+            position: relative;
+        }
+
+        .btn-excluir-pequeno {
+            float: right;
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            width: auto;
+            margin: 0;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: 0;
+            border-top: 2px solid #bdc3c7;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>Criador de Heróis</h2>
+        <button class="btn-gerar" onclick="gerarPersonagem()">GERAR NOVO PERSONAGEM</button>
+
+        <div id="resultado" style="margin-top: 20px; display: none;">
+            <h3 id="char-info"></h3>
+            <p style="text-align: center;"><strong>HP Inicial:</strong> <span id="char-hp"></span></p>
+            <div class="stat-grid" id="char-stats"></div>
+        </div>
+
+        <hr>
+
+        <button class="btn-historico" onclick="verHistorico()">VER HISTÓRICO (TXT)</button>
+        <div id="lista-historico" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // Define a URL base dinamicamente para funcionar local e no Render
+        const API_URL = window.location.origin;
+
+        async function gerarPersonagem() {
+            try {
+                const response = await fetch(`${API_URL}/personagem`);
+                const data = await response.json();
+
+                document.getElementById('resultado').style.display = 'block';
+                document.getElementById('char-info').innerText = `${data.raca} ${data.classe}`;
+                document.getElementById('char-hp').innerText = data.hp;
+
+                const statsDiv = document.getElementById('char-stats');
+                statsDiv.innerHTML = '';
+
+                for (const [stat, value] of Object.entries(data.atributos)) {
+                    statsDiv.innerHTML += `
+                        <div class="stat-box">
+                            <small>${stat}</small><br>
+                            <strong>${value}</strong>
+                        </div>`;
+                }
+                // Atualiza o histórico automaticamente ao gerar
+                verHistorico();
+            } catch (error) {
+                alert("Erro ao gerar personagem. Verifique se o backend está ativo.");
+            }
+        }
+
+        async function verHistorico() {
+            try {
+                const response = await fetch(`${API_URL}/historico`);
+                const data = await response.json();
+
+                const listaDiv = document.getElementById('lista-historico');
+                listaDiv.innerHTML = '<h3>Últimos Salvos:</h3>';
+
+                if (!data || data.length === 0 || data.message) {
+                    listaDiv.innerHTML += `<p style="text-align:center">Nenhum personagem encontrado.</p>`;
+                    return;
+                }
+
+                // Inverte para mostrar os mais novos primeiro
+                data.reverse().forEach((p) => {
+                    listaDiv.innerHTML += `
+                    <div class="historico-item" id="card-${p.id}">
+                        <button class="btn-excluir-pequeno" onclick="excluirPersonagem('${p.id}')">X</button>
+                        <strong>${p.raca} ${p.classe}</strong><br>
+                        <small>HP: ${p.hp} | ID: ${p.id.substring(0, 8)}...</small>
+                    </div>
+                `;
+                });
+            } catch (error) {
+                console.error("Erro ao carregar histórico:", error);
+            }
+        }
+
+        async function excluirPersonagem(id) {
+            if (!confirm("Deseja mesmo excluir este herói?")) return;
+
+            try {
+                const response = await fetch(`${API_URL}/personagem/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    verHistorico(); // Recarrega a lista
+                } else {
+                    const erro = await response.json();
+                    alert("Erro ao excluir: " + (erro.detail || "Erro desconhecido"));
+                }
+            } catch (error) {
+                alert("Erro ao conectar com o servidor para excluir.");
+            }
+        }
+
+        // Carrega o histórico ao abrir a página
+        verHistorico();
+    </script>
+</body>
+
+</html>

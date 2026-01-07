@@ -1,0 +1,2 @@
+{"raca": "Meio-Orc", "classe": "Mago", "atributos": {"INT": 15, "CON": 14, "DEX": 13, "WIS": 13, "CHA": 12, "FOR": 13}, "hp": 12, "bonus_aplicados": {"FOR": 2, "CON": 1}}
+{"raca": "Anão", "classe": "Ladino", "atributos": {"DEX": 17, "CON": 18, "INT": 16, "WIS": 13, "CHA": 12, "FOR": 10}, "hp": 14, "bonus_aplicados": {"CON": 2, "FOR": 2}}
